@@ -1,11 +1,11 @@
-package com.example.trainboard.ui.theme
+package com.example.trainboard.ui
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,7 +34,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
@@ -51,26 +52,36 @@ private val URL_REDIRECT = URI(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RootView(modifier: Modifier = Modifier) {
-    var fromStation by remember { mutableStateOf<Station?>(null) }
-    var toStation by remember { mutableStateOf<Station?>(null) }
+    var departureStation by remember { mutableStateOf<Station?>(null) }
+    var arrivalStation by remember { mutableStateOf<Station?>(null) }
+
     val uriHandler = LocalUriHandler.current
     val focusManager = LocalFocusManager.current
 
     Box(
-        modifier = modifier
+        modifier
             .padding(Padding.Large)
             .pointerInput(Unit) {
                 detectTapGestures { focusManager.clearFocus() }
             },
         contentAlignment = Alignment.Center,
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(Padding.Small)) {
-            StationSelect(label = "From") { fromStation = it }
-            StationSelect(label = "To") { toStation = it }
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(
+                space = Padding.Small,
+                alignment = Alignment.Bottom,
+            ),
+        ) {
+            StationDropdown(label = "From") { departureStation = it }
+            StationDropdown(label = "To") { arrivalStation = it }
 
             TextButton(
-                enabled = fromStation != null && toStation != null,
-                onClick = { handleSearch(fromStation, toStation, uriHandler) },
+                enabled = departureStation != null && arrivalStation != null,
+                onClick = {
+                    handleSearch(departureStation, arrivalStation, uriHandler)
+                },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Colour.primaryContainer,
@@ -89,34 +100,47 @@ fun RootView(modifier: Modifier = Modifier) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StationSelect(
+fun StationDropdown(
     label: String,
-    onStationChange: (Station) -> Unit,
+    onStationChange: (Station?) -> Unit,
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var isExpanded by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
+
     val stations by Client.stations.collectAsState()
+    var selectedStation: Station? by remember { mutableStateOf(null) }
+
+    var textFieldWidth by remember { mutableStateOf(0.dp) }
     val focusRequester = remember { FocusRequester() }
 
-    val filteredStations = remember(searchQuery, stations) {
-        if (searchQuery.isBlank()) {
-            stations
-        } else {
-            stations.filter { it.name.contains(searchQuery, ignoreCase = true) }
+    val filteredStations = remember {
+        derivedStateOf {
+            if (searchQuery.isBlank()) {
+                stations.toList()
+            } else {
+                stations.filter { it.name.contains(searchQuery, ignoreCase = true) }
+            }
         }
     }
 
     ExposedDropdownMenuBox(
-        expanded = expanded,
+        expanded = isExpanded,
         onExpandedChange = {
-            expanded = it
-            focusRequester.requestFocus()
+            isExpanded = it
+            if (isExpanded) focusRequester.requestFocus()
         },
         modifier = Modifier.fillMaxWidth(),
     ) {
         OutlinedTextField(
             value = searchQuery,
-            onValueChange = { searchQuery = it },
+            onValueChange = {
+                searchQuery = it
+
+                if (searchQuery != selectedStation?.name) {
+                    selectedStation = null
+                    onStationChange(null)
+                }
+            },
             modifier = Modifier
                 .focusRequester(focusRequester)
                 .menuAnchor(MenuAnchorType.PrimaryEditable)
@@ -125,43 +149,44 @@ fun StationSelect(
                     if (it.hasFocus) return@onFocusEvent
 
                     filteredStations
+                        .value
                         .firstOrNull()
                         ?.takeIf { station -> station.name.lowercase() == searchQuery.lowercase() }
                         ?.let { station ->
                             onStationChange(station)
                             searchQuery = station.name
-                            expanded = false
+                            selectedStation = station
+                            isExpanded = false
                         }
-                },
+                }.onGloballyPositioned { textFieldWidth = it.size.width.dp },
             label = { Text(label) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(isExpanded) },
             singleLine = true,
         )
 
         ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
+            expanded = isExpanded,
+            onDismissRequest = { isExpanded = false },
             modifier = Modifier
-                .animateContentSize()
                 .focusable(false),
         ) {
             LazyColumn(
                 Modifier
-                    .width(LocalConfiguration.current.screenWidthDp.dp - Padding.Large * 2)
+                    .width(textFieldWidth)
                     .height(300.dp),
             ) {
-                items(filteredStations.toList()) { station ->
+                items(filteredStations.value) { station ->
                     DropdownMenuItem(
                         text = { Text(station.name) },
                         onClick = {
                             searchQuery = station.name
                             onStationChange(station)
-                            expanded = false
+                            isExpanded = false
                         },
                     )
                 }
 
-                if (filteredStations.isEmpty()) {
+                if (filteredStations.value.isEmpty()) {
                     item {
                         DropdownMenuItem(
                             text = { Text("No results") },
