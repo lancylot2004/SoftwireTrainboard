@@ -126,9 +126,11 @@ fun ArrowWithDuration(
     ) {
         Text(
             text = duration.toComponents { minutes, _, _ ->
-                "${minutes / 60}h ${minutes % 60}m"
+                val hours = minutes / 60
+                val hoursText = if (hours > 0) "$hours h " else ""
+                "$hoursText ${minutes % 60}m"
             },
-            style = Typography.labelMedium,
+            style = Typography.labelLarge,
             fontWeight = FontWeight.Bold,
         )
 
@@ -144,7 +146,7 @@ fun ArrowWithDuration(
                 strokeWidth = 4f,
             )
 
-            val headSize = 10f // Arrowhead size in pixels
+            val headSize = 10f
 
             drawLine(
                 color = colour,
@@ -162,7 +164,7 @@ fun ArrowWithDuration(
 
         Text(
             text = if (numberOfChanges == 0) "Direct" else "Changes: $numberOfChanges",
-            style = Typography.labelMedium,
+            style = Typography.labelLarge,
             fontWeight = FontWeight.Bold,
         )
     }
