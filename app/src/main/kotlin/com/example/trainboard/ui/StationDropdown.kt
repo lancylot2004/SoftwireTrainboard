@@ -25,6 +25,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.example.trainboard.api.Client
 import com.example.trainboard.structures.Station
@@ -43,6 +44,7 @@ fun StationDropdown(
     val stations by Client.stations.collectAsState()
     var selectedStation: Station? by remember { mutableStateOf(null) }
 
+    val localDensity = LocalDensity.current
     var textFieldWidth by remember { mutableStateOf(0.dp) }
     val focusRequester = remember { FocusRequester() }
 
@@ -94,7 +96,9 @@ fun StationDropdown(
                             selectedStation = station
                             isExpanded = false
                         }
-                }.onGloballyPositioned { textFieldWidth = it.size.width.dp },
+                }.onGloballyPositioned {
+                    textFieldWidth = with(localDensity) { it.size.width.toDp() }
+                },
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(isExpanded) },
             singleLine = true,
