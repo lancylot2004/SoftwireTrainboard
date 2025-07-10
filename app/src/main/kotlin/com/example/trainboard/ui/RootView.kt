@@ -76,6 +76,8 @@ fun RootView(modifier: Modifier = Modifier) {
                 alignment = Alignment.Bottom,
             ),
         ) {
+            /* TODO: Reconsider coupling between `StationDropdown` and API calls, and consider
+               how to show error states which are unrelated to search, neatly. */
             SearchResultView(searchState, departureStation, arrivalStation)
 
             StationDropdown(label = "From") { departureStation = it }
@@ -124,10 +126,8 @@ private suspend fun onSearch(
     focusManager.clearFocus()
     callback(LoadState.Loading)
 
-    // Smart cast not possible, but contract in `checkCanSearch` hopefully adds
-    // safety. https://kotlinlang.org/docs/typecasts.html#smart-cast-prerequisites
     handleSearch(departureStation, arrivalStation) {
-        callback(LoadState.Success(it))
+        callback(it)
     }
 }
 
@@ -180,8 +180,7 @@ private suspend fun checkCanSearch(
 private suspend fun handleSearch(
     fromStation: Station,
     toStation: Station,
-    callback: (List<Journey>) -> Unit,
+    callback: (LoadState<List<Journey>, String>) -> Unit,
 ) = Client
     .getJourneyFares(fromStation, toStation)
-    .outboundJourneys
     .let(callback)

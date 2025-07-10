@@ -28,6 +28,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
 import com.example.trainboard.api.Client
 import com.example.trainboard.structures.Station
+import com.example.trainboard.utilities.LoadState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,6 +39,7 @@ fun StationDropdown(
     var isExpanded by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
 
+    // TODO: Hook in `RootView` when stations cannot be loaded.
     val stations by Client.stations.collectAsState()
     var selectedStation: Station? by remember { mutableStateOf(null) }
 
@@ -46,10 +48,13 @@ fun StationDropdown(
 
     val filteredStations = remember {
         derivedStateOf {
+            if (stations !is LoadState.Success) return@derivedStateOf emptyList()
+            val stationList = (stations as LoadState.Success<List<Station>>).data
+
             if (searchQuery.isBlank()) {
-                stations.toList()
+                stationList
             } else {
-                stations.filter { it.name.contains(searchQuery, ignoreCase = true) }
+                stationList.filter { it.name.contains(searchQuery, ignoreCase = true) }
             }
         }
     }
