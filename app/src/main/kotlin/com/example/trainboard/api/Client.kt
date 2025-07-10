@@ -28,11 +28,16 @@ object Client {
 
     init {
         CoroutineScope(Dispatchers.IO).launch {
-            client
-                .get(URL_BASE.resolve("stations").toString())
-                .body<StationsResponse>()
-                .let { it.stations.filter { station -> station.crs != null } }
-                .let { _stations.value = it }
+            runCatching {
+                return@runCatching client
+                    .get(URL_BASE.resolve("stations").toString())
+                    .body<StationsResponse>()
+                    .stations
+                    .filter { it.crs != null }
+            }.fold(
+                onSuccess = { _stations.value = it },
+                onFailure = { /* TODO: Errors won't cause crashes, but are better handled in part two. */ },
+            )
         }
     }
 
