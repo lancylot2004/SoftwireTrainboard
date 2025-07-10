@@ -1,7 +1,10 @@
 package com.example.trainboard.ui
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,9 +14,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -33,10 +41,21 @@ import kotlin.time.Instant
 @OptIn(ExperimentalTime::class)
 @Composable
 fun JourneyCard(journey: Journey, modifier: Modifier = Modifier) {
+    var isExpanded by remember { mutableStateOf(false) }
+    val cardHeight by animateDpAsState(
+        targetValue = if (isExpanded) 200.dp else 80.dp,
+        animationSpec = tween(),
+        label = "Journey Card Height Animation",
+    )
+
     Card(
         modifier
             .background(Colour.background)
-            .height(80.dp),
+            .height(cardHeight)
+            .clickable(
+                onClickLabel = if (isExpanded) "Collapse Journey Card" else "Expand Journey Card",
+                role = Role.Button,
+            ) { isExpanded = !isExpanded },
     ) {
         Column(
             Modifier.padding(Padding.Medium),
@@ -127,7 +146,7 @@ fun ArrowWithDuration(
         Text(
             text = duration.toComponents { minutes, _, _ ->
                 val hours = minutes / 60
-                val hoursText = if (hours > 0) "$hours h " else ""
+                val hoursText = if (hours > 0) "${hours}h " else ""
                 "$hoursText ${minutes % 60}m"
             },
             style = Typography.labelLarge,

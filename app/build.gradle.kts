@@ -85,4 +85,7 @@ dependencies {
 
     // Skeleton / Shimmer Animations | https://github.com/valentinilk/compose-shimmer | Apache-2.0
     implementation(libs.shimmer)
+
+    // Async Media Loading | https://github.com/Kamel-Media/Kamel | Apache-2.0
+    implementation(libs.kamel.image.default)
 }

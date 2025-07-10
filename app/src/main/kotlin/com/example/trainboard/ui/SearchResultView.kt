@@ -1,22 +1,36 @@
 package com.example.trainboard.ui
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import com.example.trainboard.structures.Journey
 import com.example.trainboard.structures.Station
 import com.example.trainboard.utilities.LoadState
 import com.example.trainboard.utilities.Padding
 import com.example.trainboard.utilities.Typography
+import io.kamel.image.KamelImage
+import io.kamel.image.asyncPainterResource
 
 @Composable
 fun ColumnScope.SearchResultView(
@@ -34,10 +48,44 @@ fun ColumnScope.SearchResultView(
         }
 
         LoadState.Loading -> {
-            Text(
-                text = "Searching for journeys...",
-                style = Typography.titleMedium,
-                fontWeight = FontWeight.Bold,
+            val infiniteTransition = rememberInfiniteTransition()
+            val rotation by infiniteTransition.animateFloat(
+                initialValue = 0f,
+                targetValue = 360f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = 1000, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart,
+                ),
+            )
+
+            KamelImage(
+                resource = {
+                    asyncPainterResource(
+                        "https://media.licdn.com/dms/image/v2/D4E03AQGYKKntDnhkKA/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1710953472462?e=1757548800&v=beta&t=Y3yA635XxMFmPnXJo0ffGWa0jgfr--COMEU9maR8A24",
+                    )
+                },
+                contentDescription = "Lancelot is loading your journeys...",
+                modifier = Modifier
+                    .padding(Padding.Medium)
+                    .size(200.dp)
+                    .align(Alignment.CenterHorizontally)
+                    .graphicsLayer { rotationX = rotation }
+                    .clip(CircleShape),
+            )
+
+            KamelImage(
+                resource = {
+                    asyncPainterResource(
+                        "https://media.licdn.com/dms/image/v2/D4E03AQHhzFaui6EW-A/profile-displayphoto-shrink_400_400/B4EZOWZvztH0Ag-/0/1733395152723?e=1757548800&v=beta&t=3LJSOy1MLupQeGQ5ldEAHvkyl17tsBtjfufAFJrX-n4",
+                    )
+                },
+                contentDescription = "Nick is loading your journeys...",
+                modifier = Modifier
+                    .padding(Padding.Medium)
+                    .size(200.dp)
+                    .align(Alignment.CenterHorizontally)
+                    .graphicsLayer { rotationZ = rotation }
+                    .clip(CircleShape),
             )
         }
 

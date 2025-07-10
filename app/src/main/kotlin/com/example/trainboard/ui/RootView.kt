@@ -80,8 +80,8 @@ fun RootView(modifier: Modifier = Modifier) {
                how to show error states which are unrelated to search, neatly. */
             SearchResultView(searchState, departureStation, arrivalStation)
 
-            StationDropdown(label = "From") { departureStation = it }
-            StationDropdown(label = "To") { arrivalStation = it }
+            StationDropdown(label = "From") { it?.let { departureStation = it } }
+            StationDropdown(label = "To") { it?.let { arrivalStation = it } }
 
             TextButton(
                 onClick = {
