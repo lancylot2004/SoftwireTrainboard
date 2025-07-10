@@ -89,7 +89,9 @@ fun StationDropdown(
                             selectedStation = station
                             isExpanded = false
                         }
-                }.onGloballyPositioned { textFieldWidth = it.size.width.dp },
+                }.onGloballyPositioned { 
+                    textFieldWidth = with(LocalDensity.current) { it.size.width.toDp() } 
+                },
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(isExpanded) },
             singleLine = true,
