@@ -23,8 +23,8 @@ import java.net.URI
 object Client {
     private val URL_BASE = URI("https://int-test1.tram.softwire-lner-dev.co.uk/v1/")
 
-    private val _stations = MutableStateFlow<Set<Station>>(emptySet())
-    val stations: StateFlow<Set<Station>> get() = _stations
+    private val _stations = MutableStateFlow<List<Station>>(emptyList())
+    val stations: StateFlow<List<Station>> get() = _stations
 
     init {
         CoroutineScope(Dispatchers.IO).launch {
@@ -32,7 +32,7 @@ object Client {
                 .get(URL_BASE.resolve("stations").toString())
                 .body<StationsResponse>()
                 .let { it.stations.filter { station -> station.crs != null } }
-                .let { _stations.value = it.toSet() }
+                .let { _stations.value = it }
         }
     }
 
