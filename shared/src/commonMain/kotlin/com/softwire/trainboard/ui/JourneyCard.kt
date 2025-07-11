@@ -103,7 +103,6 @@ fun JourneyCard(journey: Journey, modifier: Modifier = Modifier, earliestArrival
                     fontWeight = FontWeight.Bold
                 )
             }
-
             if (isExpanded) {
                 Spacer(modifier = Modifier.weight(1f))
                 if (journey.legs.size > 1) {
