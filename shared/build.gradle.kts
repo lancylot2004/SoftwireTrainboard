@@ -100,6 +100,10 @@ kotlin {
 
             // Skeleton / Shimmer Effect | https://github.com/valentinilk/compose-shimmer | Apache-2.0
             implementation(libs.shimmer)
+
+            // Lucide Icons | https://github.com/composablehorizons/composeicons | MIT
+            //              | https://lucide.dev/ | ISC
+            implementation(libs.lucide)
         }
 
         commonTest.dependencies {

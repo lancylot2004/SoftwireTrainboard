@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarDuration
@@ -28,7 +29,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import com.softwire.trainboard.api.Client
-import com.softwire.trainboard.structures.Journey
+import com.softwire.trainboard.structures.FareSearchResult
 import com.softwire.trainboard.structures.Station
 import com.softwire.trainboard.utilities.Colour
 import com.softwire.trainboard.utilities.LoadState
@@ -50,9 +51,12 @@ fun RootView(modifier: Modifier = Modifier) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    var searchState: LoadState<List<Journey>, String> by remember {
+    var searchState: LoadState<FareSearchResult, String> by remember {
         mutableStateOf(LoadState.Idle)
     }
+
+    val lazyListState = remember { LazyListState() }
+    var isLoadingMore by remember { mutableStateOf(false) }
 
     Box(
         modifier
@@ -78,7 +82,28 @@ fun RootView(modifier: Modifier = Modifier) {
         ) {
             /* TODO: Reconsider coupling between `StationDropdown` and API calls, and consider
                how to show error states which are unrelated to search, neatly. */
-            SearchResultView(searchState, departureStation, arrivalStation)
+            when (searchState) {
+                is LoadState.Idle -> SearchResultIdle()
+                is LoadState.Loading -> SearchResultLoading()
+                is LoadState.Error -> SearchResultError(searchState as LoadState.Error<String>)
+                is LoadState.Success -> SearchResultSuccess(
+                    searchState = searchState as LoadState.Success<FareSearchResult>,
+                    lazyListState = lazyListState,
+                    isLoadingMore = isLoadingMore,
+                    departureStation = departureStation,
+                    arrivalStation = arrivalStation,
+                    refreshCallback = callback@{
+                        if (searchState !is LoadState.Success<FareSearchResult>) return@callback
+                        val fareSearchResult =
+                            (searchState as LoadState.Success<FareSearchResult>).data
+                        scope.launch {
+                            isLoadingMore = true
+                            searchState = Client.getMoreJourneyFares(fareSearchResult)
+                            isLoadingMore = false
+                        }
+                    },
+                )
+            }
 
             StationDropdown(label = "From") { it?.let { departureStation = it } }
             StationDropdown(label = "To") { it?.let { arrivalStation = it } }
@@ -117,7 +142,7 @@ private suspend fun onSearch(
     arrivalStation: Station?,
     snackbarHostState: SnackbarHostState,
     focusManager: FocusManager,
-    callback: (LoadState<List<Journey>, String>) -> Unit,
+    callback: (LoadState<FareSearchResult, String>) -> Unit,
 ) {
     if (!checkCanSearch(departureStation, arrivalStation, snackbarHostState)) {
         return
@@ -180,7 +205,7 @@ private suspend fun checkCanSearch(
 private suspend fun handleSearch(
     fromStation: Station,
     toStation: Station,
-    callback: (LoadState<List<Journey>, String>) -> Unit,
+    callback: (LoadState<FareSearchResult, String>) -> Unit,
 ) = Client
     .getJourneyFares(fromStation, toStation)
     .let(callback)
