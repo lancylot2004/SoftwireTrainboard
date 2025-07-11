@@ -24,6 +24,6 @@ actual fun createHttpClient(): HttpClient = HttpClient(CIO) {
     }
     install(HttpCache)
     install(DefaultRequest) {
-        header("x-api-key", "\"${Config.API_KEY}\"")
+        header("x-api-key", Config.API_KEY)
     }
 }

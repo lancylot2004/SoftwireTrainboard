@@ -26,6 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import com.softwire.trainboard.api.Client
 import com.softwire.trainboard.structures.Journey
@@ -96,7 +98,8 @@ fun RootView(modifier: Modifier = Modifier) {
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .applyIf(searchState is LoadState.Loading) { this.shimmer() },
+                    .applyIf(searchState is LoadState.Loading) { this.shimmer() }
+                    .semantics { contentDescription = "Searches for next live train" },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Colour.primaryContainer,
                     contentColor = Colour.onPrimaryContainer,
