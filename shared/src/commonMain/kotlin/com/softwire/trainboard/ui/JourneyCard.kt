@@ -155,19 +155,15 @@ private fun DisplayPills(label: String) {
         modifier = Modifier
             .background(
                 shape = RoundedCornerShape(16.dp),
-                color = Colour.primaryContainer
-            )
-            .border(
-                width = 1.dp,
-                color = Color.Black,
-                shape = RoundedCornerShape(16.dp)
+                color = Color(0xFF006400)
             )
             .padding(horizontal = 12.dp, vertical = 0.5.dp)
     ) {
         Text(
             text = label,
             style = Typography.titleSmall,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = Color.White
         )
     }
 }
