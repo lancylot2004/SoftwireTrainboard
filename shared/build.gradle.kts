@@ -112,6 +112,7 @@ kotlin {
 
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
+            implementation("androidx.appcompat:appcompat:1.7.1")
 
             // [Common] Async Client | https://github.com/ktorio/ktor | Apache-2.0
             implementation(libs.ktor.client.cio)
