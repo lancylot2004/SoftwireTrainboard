@@ -16,4 +16,11 @@ enum class Status {
 
     @SerialName("fully_reserved")
     FULLY_RESERVED,
+
+    ;
+
+    override fun toString(): String {
+        val correctCasedEnum = name.lowercase().replaceFirstChar { it.uppercaseChar() }
+        return correctCasedEnum.replace('_', ' ')
+    }
 }

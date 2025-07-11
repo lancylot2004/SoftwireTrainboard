@@ -40,6 +40,7 @@ import com.softwire.trainboard.utilities.Padding
 import com.softwire.trainboard.utilities.Typography
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
+import kotlin.time.ExperimentalTime
 
 @Composable
 internal fun SearchResultIdle() {
@@ -153,7 +154,7 @@ internal fun ColumnScope.SearchResultSuccess(
         ),
     ) {
         items(journeys) { journey ->
-            JourneyCard(journey)
+            JourneyCard(journey, earliestArrivalId)
         }
 
         if (journeys.size <= 5 && !isLoadingMore) {
@@ -177,3 +178,7 @@ internal fun ColumnScope.SearchResultSuccess(
         }
     }
 }
+
+@OptIn(ExperimentalTime::class)
+private fun getEarliestArrival(journeys: List<Journey>): String =
+   journeys.minBy { it.arrivalTime }.journeyId
