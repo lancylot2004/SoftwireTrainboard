@@ -42,11 +42,10 @@ object Client {
                     .body<Station.StationsResponse>()
                     .stations
                     .filter { it.crs != null }
-            }.onSuccess {
-                _stations.value = LoadState.Success(it)
-            }.onFailure { error ->
-                _stations.value = LoadState.Error(error.toString())
-            }
+            }.fold(
+                onSuccess = { _stations.value = LoadState.Success(it) },
+                onFailure = { error -> _stations.value = LoadState.Error(error.toString()) },
+            )
         }
     }
 
