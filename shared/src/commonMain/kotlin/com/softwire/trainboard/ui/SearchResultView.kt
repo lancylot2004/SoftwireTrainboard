@@ -138,7 +138,7 @@ fun ColumnScope.SearchResultView(
             ) {
                 val earliestArrivalId = getEarliestArrival(journeys)
                 items(journeys) { journey ->
-                    JourneyCard(journey, Modifier, earliestArrivalId)
+                    JourneyCard(journey, earliestArrivalId)
                 }
             }
         }

@@ -15,10 +15,12 @@ enum class Status {
     CANCELLED,
 
     @SerialName("fully_reserved")
-    FULLY_RESERVED;
+    FULLY_RESERVED,
+
+    ;
 
     override fun toString(): String {
-        val correctCasedEnum =  name.lowercase().replaceFirstChar { it.uppercaseChar() }
+        val correctCasedEnum = name.lowercase().replaceFirstChar { it.uppercaseChar() }
         return correctCasedEnum.replace('_', ' ')
     }
 }

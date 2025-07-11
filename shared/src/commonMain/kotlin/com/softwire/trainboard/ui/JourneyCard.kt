@@ -1,10 +1,10 @@
 package com.softwire.trainboard.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,10 +14,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -32,8 +30,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.softwire.trainboard.structures.Journey
-import com.softwire.trainboard.utilities.Colour
 import com.softwire.trainboard.structures.Station
+import com.softwire.trainboard.utilities.Colour
 import com.softwire.trainboard.utilities.HourMinuteFormatter
 import com.softwire.trainboard.utilities.Padding
 import com.softwire.trainboard.utilities.Typography
@@ -44,9 +42,13 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
-@OptIn(ExperimentalTime::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalTime::class)
 @Composable
-fun JourneyCard(journey: Journey, modifier: Modifier = Modifier, earliestArrivalTime: String) {
+fun JourneyCard(
+    journey: Journey,
+    earliestArrivalTime: String,
+    modifier: Modifier = Modifier,
+) {
     var isExpanded by remember { mutableStateOf(false) }
 
     val transferStations = getTransferStations(journey)
@@ -64,14 +66,12 @@ fun JourneyCard(journey: Journey, modifier: Modifier = Modifier, earliestArrival
             .clickable(
                 onClickLabel = if (isExpanded) "Collapse Journey Card" else "Expand Journey Card",
                 role = Role.Button,
-            ) { isExpanded = !isExpanded }
+            ) { isExpanded = !isExpanded },
     ) {
-
         Column(
             Modifier.padding(Padding.Medium),
             verticalArrangement = Arrangement.Center,
         ) {
-
             DisplayTimesAndStations(
                 startTime = journey.departureTime,
                 endTime = journey.arrivalTime,
@@ -81,10 +81,10 @@ fun JourneyCard(journey: Journey, modifier: Modifier = Modifier, earliestArrival
                 isShowingStation = false,
                 numberOfChanges = journey.legs.size - 1,
             )
-            Row (modifier = Modifier
-                .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (journey.isFastestJourney) {
                     DisplayPills("Fastest", Color(0xFF006400))
@@ -100,23 +100,23 @@ fun JourneyCard(journey: Journey, modifier: Modifier = Modifier, earliestArrival
                 Text(
                     text = getCheapestTicketPrice(journey),
                     style = Typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
+
             if (isExpanded) {
                 Spacer(modifier = Modifier.weight(1f))
                 if (journey.legs.size > 1) {
                     Text(
                         text = "Change At: $transferStations",
-                        style = Typography.titleMedium
+                        style = Typography.titleMedium,
                     )
                     Spacer(modifier = Modifier.weight(1f))
                 }
                 Text(
-                    text = "Current Status: ${journey.status.toString()}",
-                    style = Typography.titleMedium
+                    text = "Current Status: ${journey.status}",
+                    style = Typography.titleMedium,
                 )
-
             }
         }
     }
@@ -132,12 +132,12 @@ private fun getTransferStations(journey: Journey): MutableList<Station> {
     return transferStations
 }
 
-private fun getCheapestTicketPrice(journey : Journey): String {
+private fun getCheapestTicketPrice(journey: Journey): String {
     val cheapestTicket = journey
         .tickets
         .minByOrNull { it.priceInPennies }
     return if (cheapestTicket != null) {
-        val cheapestTicketPrice: Double = cheapestTicket.priceInPennies/100.0
+        val cheapestTicketPrice: Double = cheapestTicket.priceInPennies / 100.0
         val priceRounded = cheapestTicketPrice.roundToDecimalPlaces(2)
         "From £$priceRounded"
     } else {
@@ -151,15 +151,14 @@ private fun DisplayPills(label: String, colour: Color) {
         modifier = Modifier
             .background(
                 shape = RoundedCornerShape(16.dp),
-                color = colour
-            )
-            .padding(horizontal = 12.dp, vertical = 0.5.dp)
+                color = colour,
+            ).padding(horizontal = 12.dp, vertical = 0.5.dp),
     ) {
         Text(
             text = label,
             style = Typography.titleSmall,
             fontWeight = FontWeight.Bold,
-            color = Color.White
+            color = Color.White,
         )
     }
 }
@@ -212,8 +211,9 @@ private fun DisplayTime(
             style = Typography.titleLarge,
             fontWeight = FontWeight.Bold,
         )
-
-        if (isShowing) {
+        AnimatedVisibility(
+            isShowing,
+        ) {
             Text(
                 station,
                 style = Typography.labelMedium,
