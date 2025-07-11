@@ -4,22 +4,20 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.paddingFrom
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
-import androidx.compose.material3.ChipColors
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,22 +27,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.softwire.trainboard.structures.Journey
 import com.softwire.trainboard.utilities.Colour
 import com.softwire.trainboard.structures.Station
-import com.softwire.trainboard.structures.Status
-import com.softwire.trainboard.structures.Ticket
 import com.softwire.trainboard.utilities.HourMinuteFormatter
 import com.softwire.trainboard.utilities.Padding
 import com.softwire.trainboard.utilities.Typography
+import com.softwire.trainboard.utilities.roundToDecimalPlaces
 import kotlinx.datetime.format
-import java.math.RoundingMode
-import java.text.NumberFormat
-import java.util.Locale
-import kotlin.math.round
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
@@ -52,18 +46,20 @@ import kotlin.time.Instant
 
 @OptIn(ExperimentalTime::class, ExperimentalMaterial3Api::class)
 @Composable
-fun JourneyCard(journey: Journey, modifier: Modifier = Modifier) {
+fun JourneyCard(journey: Journey, modifier: Modifier = Modifier, earliestArrivalTime: String) {
     var isExpanded by remember { mutableStateOf(false) }
+
+    val transferStations = getTransferStations(journey)
+        .joinToString(separator = ", ") { it.name }
+
     val cardHeight by animateDpAsState(
         targetValue = if (isExpanded) 200.dp else 100.dp,
         animationSpec = tween(),
         label = "Journey Card Height Animation",
     )
-    val sizeOfChip: Int = 80
 
     Card(
-        modifier = Modifier
-            .background(Colour.background)
+        modifier = modifier
             .height(cardHeight)
             .clickable(
                 onClickLabel = if (isExpanded) "Collapse Journey Card" else "Expand Journey Card",
@@ -91,18 +87,15 @@ fun JourneyCard(journey: Journey, modifier: Modifier = Modifier) {
 
             ) {
                 if (journey.isFastestJourney) {
-                    SuggestionChip(
-                        modifier = Modifier,
-                        label = {
-                            Text(
-                                text = "Fastest",
-                                style = Typography.titleMedium
-                            ) },
-                        onClick = {},
-                        enabled = false
-                    )
+                    DisplayPills("Fastest")
                 } else {
-                    Spacer(modifier = Modifier.width(sizeOfChip.dp))
+                    Spacer(modifier = Modifier.width(80.dp))
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                if (journey.journeyId == earliestArrivalTime) {
+                    DisplayPills("Arrives First")
+                } else {
+                    Spacer(modifier = Modifier.width(80.dp))
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
@@ -111,31 +104,72 @@ fun JourneyCard(journey: Journey, modifier: Modifier = Modifier) {
                     text = getCheapestTicketPrice(journey),
                     style = Typography.titleMedium,
                     fontWeight = FontWeight.Bold
-
                 )
+            }
+
+            if (isExpanded) {
+                Spacer(modifier = Modifier.weight(1f))
+                if (journey.legs.size > 1) {
+                    Text(
+                        text = "Change At: $transferStations",
+                        style = Typography.titleMedium
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+                Text(
+                    text = "Current Status: ${journey.status.toString()}",
+                    style = Typography.titleMedium
+                )
+
             }
         }
     }
 }
 
+private fun getTransferStations(journey: Journey): MutableList<Station> {
+    val transferStations = mutableListOf<Station>()
+    journey.legs.indices.forEach { index ->
+        if (index != journey.legs.lastIndex) {
+            transferStations.add(journey.legs[index].destination)
+        }
+    }
+    return transferStations
+}
+
 private fun getCheapestTicketPrice(journey : Journey): String {
     val cheapestTicket = journey
         .tickets
-        .minBy { it.priceInPennies }
-    val cheapestTicketPrice: Double = cheapestTicket.priceInPennies/100.0
-    val priceRounded = cheapestTicketPrice.toBigDecimal().setScale(2, RoundingMode.UP).toDouble()
-    return formatPrice(priceRounded)
-}
-private fun formatPrice(amount: Double): String {
-    val format = NumberFormat.getCurrencyInstance(Locale.UK)
-    return format.format(amount)
+        .minByOrNull { it.priceInPennies }
+    return if (cheapestTicket != null) {
+        val cheapestTicketPrice: Double = cheapestTicket.priceInPennies/100.0
+        val priceRounded = cheapestTicketPrice.roundToDecimalPlaces(2)
+        "From £$priceRounded"
+    } else {
+        "No Tickets Available"
+    }
 }
 
 @Composable
-private fun DisplayChips(
-    label: String
-) {
-
+private fun DisplayPills(label: String) {
+    Box(
+        modifier = Modifier
+            .background(
+                shape = RoundedCornerShape(16.dp),
+                color = Colour.primaryContainer
+            )
+            .border(
+                width = 1.dp,
+                color = Color.Black,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .padding(horizontal = 12.dp, vertical = 0.5.dp)
+    ) {
+        Text(
+            text = label,
+            style = Typography.titleSmall,
+            fontWeight = FontWeight.Bold
+        )
+    }
 }
 
 @OptIn(ExperimentalTime::class)

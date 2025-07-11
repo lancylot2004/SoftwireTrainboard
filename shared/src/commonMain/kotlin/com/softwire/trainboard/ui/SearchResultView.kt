@@ -31,6 +31,7 @@ import com.softwire.trainboard.utilities.Padding
 import com.softwire.trainboard.utilities.Typography
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
+import kotlin.time.ExperimentalTime
 
 @Composable
 fun ColumnScope.SearchResultView(
@@ -135,10 +136,17 @@ fun ColumnScope.SearchResultView(
                     alignment = Alignment.CenterVertically,
                 ),
             ) {
+                val earliestArrivalId = getEarliestArrival(journeys)
                 items(journeys) { journey ->
-                    JourneyCard(journey)
+                    JourneyCard(journey, Modifier, earliestArrivalId)
                 }
             }
         }
     }
+}
+
+@OptIn(ExperimentalTime::class)
+private fun getEarliestArrival(journeys: List<Journey>): String {
+    val earliestArrival = journeys.minBy { it.arrivalTime }
+    return earliestArrival.journeyId
 }
