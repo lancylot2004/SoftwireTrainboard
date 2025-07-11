@@ -8,10 +8,18 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.paddingFrom
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
+import androidx.compose.material3.ChipColors
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,61 +36,118 @@ import androidx.compose.ui.unit.dp
 import com.example.trainboard.structures.Journey
 import com.example.trainboard.structures.Station
 import com.example.trainboard.structures.Status
+import com.example.trainboard.structures.Ticket
 import com.example.trainboard.utilities.Colour
 import com.example.trainboard.utilities.HourMinuteFormatter
 import com.example.trainboard.utilities.Padding
 import com.example.trainboard.utilities.Typography
 import kotlinx.datetime.format
+import java.math.RoundingMode
+import java.text.NumberFormat
+import java.util.Locale
+import kotlin.math.round
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
-@OptIn(ExperimentalTime::class)
+@OptIn(ExperimentalTime::class, ExperimentalMaterial3Api::class)
 @Composable
 fun JourneyCard(journey: Journey, modifier: Modifier = Modifier) {
     var isExpanded by remember { mutableStateOf(false) }
     val cardHeight by animateDpAsState(
-        targetValue = if (isExpanded) 200.dp else 80.dp,
+        targetValue = if (isExpanded) 200.dp else 100.dp,
         animationSpec = tween(),
         label = "Journey Card Height Animation",
     )
+    val sizeOfChip: Int = 80
 
     Card(
-        modifier
+        modifier = Modifier
             .background(Colour.background)
             .height(cardHeight)
             .clickable(
                 onClickLabel = if (isExpanded) "Collapse Journey Card" else "Expand Journey Card",
                 role = Role.Button,
-            ) { isExpanded = !isExpanded },
+            ) { isExpanded = !isExpanded }
     ) {
+
         Column(
             Modifier.padding(Padding.Medium),
             verticalArrangement = Arrangement.Center,
         ) {
-            TimesAndStations(
+
+            DisplayTimesAndStations(
                 startTime = journey.departureTime,
                 endTime = journey.arrivalTime,
                 journeyDuration = journey.journeyDurationInMinutes.minutes,
                 startStation = journey.originStation.name,
                 endStation = journey.destinationStation.name,
-                showStation = false,
+                isShowingStation = false,
                 numberOfChanges = journey.legs.size - 1,
             )
+            Row (modifier = Modifier
+                .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+
+            ) {
+                if (journey.isFastestJourney) {
+                    SuggestionChip(
+                        modifier = Modifier,
+                        label = {
+                            Text(
+                                text = "Fastest",
+                                style = Typography.titleMedium
+                            ) },
+                        onClick = {},
+                        enabled = false
+                    )
+                } else {
+                    Spacer(modifier = Modifier.width(sizeOfChip.dp))
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Text(
+                    text = getCheapestTicketPrice(journey),
+                    style = Typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+
+                )
+            }
         }
     }
 }
 
+private fun getCheapestTicketPrice(journey : Journey): String {
+    val cheapestTicket = journey
+        .tickets
+        .minBy { it.priceInPennies }
+    val cheapestTicketPrice: Double = cheapestTicket.priceInPennies/100.0
+    val priceRounded = cheapestTicketPrice.toBigDecimal().setScale(2, RoundingMode.UP).toDouble()
+    return formatPrice(priceRounded)
+}
+private fun formatPrice(amount: Double): String {
+    val format = NumberFormat.getCurrencyInstance(Locale.UK)
+    return format.format(amount)
+}
+
+@Composable
+private fun DisplayChips(
+    label: String
+) {
+
+}
+
 @OptIn(ExperimentalTime::class)
 @Composable
-private fun TimesAndStations(
+private fun DisplayTimesAndStations(
     startTime: Instant,
     endTime: Instant,
     journeyDuration: Duration,
     startStation: String,
     endStation: String,
-    showStation: Boolean,
+    isShowingStation: Boolean,
     numberOfChanges: Int,
 ) {
     Row(
@@ -93,7 +158,7 @@ private fun TimesAndStations(
         DisplayTime(
             time = startTime,
             station = startStation,
-            show = showStation,
+            isShowing = isShowingStation,
         )
 
         ArrowWithDuration(journeyDuration, numberOfChanges)
@@ -101,7 +166,7 @@ private fun TimesAndStations(
         DisplayTime(
             time = endTime,
             station = endStation,
-            show = showStation,
+            isShowing = isShowingStation,
         )
     }
 }
@@ -111,7 +176,7 @@ private fun TimesAndStations(
 private fun DisplayTime(
     time: Instant,
     station: String,
-    show: Boolean,
+    isShowing: Boolean,
 ) {
     Column(
         verticalArrangement = Arrangement.Center,
@@ -123,7 +188,7 @@ private fun DisplayTime(
             fontWeight = FontWeight.Bold,
         )
 
-        if (show) {
+        if (isShowing) {
             Text(
                 station,
                 style = Typography.labelMedium,
