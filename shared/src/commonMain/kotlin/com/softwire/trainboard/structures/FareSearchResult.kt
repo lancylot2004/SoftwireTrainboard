@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class FareSearchResult(
     val outboundJourneys: List<Journey>,
-    val inboundJourneys: List<Journey>? = null,
+    val nextOutboundQuery: String?,
 )

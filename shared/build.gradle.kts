@@ -36,6 +36,7 @@ buildkonfig {
             "API_KEY",
             propertyFile.getProperty("trainboard.api_key")
                 ?: throw IllegalArgumentException("API_KEY not found in local.properties"),
+            const = true,
         )
     }
 }
@@ -99,6 +100,10 @@ kotlin {
 
             // Skeleton / Shimmer Effect | https://github.com/valentinilk/compose-shimmer | Apache-2.0
             implementation(libs.shimmer)
+
+            // Lucide Icons | https://github.com/composablehorizons/composeicons | MIT
+            //              | https://lucide.dev/ | ISC
+            implementation(libs.lucide)
         }
 
         commonTest.dependencies {
@@ -107,6 +112,7 @@ kotlin {
 
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
+            implementation("androidx.appcompat:appcompat:1.7.1")
 
             // [Common] Async Client | https://github.com/ktorio/ktor | Apache-2.0
             implementation(libs.ktor.client.cio)
@@ -117,6 +123,8 @@ kotlin {
             implementation(libs.ktor.client.darwin)
         }
     }
+
+    applyDefaultHierarchyTemplate()
 }
 
 android {

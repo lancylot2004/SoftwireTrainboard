@@ -17,6 +17,7 @@ actual fun createHttpClient(): HttpClient = HttpClient(CIO) {
         json(
             Json {
                 ignoreUnknownKeys = true
+                isLenient = true
                 serializersModule += JourneyLeg.Module
                 classDiscriminator = "type"
             },
