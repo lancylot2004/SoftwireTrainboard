@@ -17,6 +17,7 @@ actual fun createHttpClient(): HttpClient = HttpClient(Darwin) {
         json(
             Json {
                 ignoreUnknownKeys = true
+                isLenient = true
                 serializersModule += JourneyLeg.Module
                 classDiscriminator = "type"
             },
@@ -24,6 +25,6 @@ actual fun createHttpClient(): HttpClient = HttpClient(Darwin) {
     }
     install(HttpCache)
     install(DefaultRequest) {
-        header("x-api-key", "\"${Config.API_KEY}\"")
+        header("x-api-key", Config.API_KEY)
     }
 }

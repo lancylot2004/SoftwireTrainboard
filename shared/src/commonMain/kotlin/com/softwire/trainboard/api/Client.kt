@@ -9,11 +9,8 @@ import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.http.appendPathSegments
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -23,27 +20,25 @@ object Client {
     private val BASE_URL = "https://int-test1.tram.softwire-lner-dev.co.uk/v1/"
 
     private val _stations = MutableStateFlow<LoadState<List<Station>, String>>(LoadState.Idle)
-    val stations: StateFlow<LoadState<List<Station>, String>> get() = _stations
+    val stations: StateFlow<LoadState<List<Station>, String>>
+        get() = _stations
+    private val client = createHttpClient()
 
-    init {
-        CoroutineScope(Dispatchers.Default).launch {
-            _stations.value = LoadState.Loading
-            runCatching {
-                client
-                    .get(BASE_URL) {
-                        url { appendPathSegments("stations") }
-                    }.body<Station.StationsResponse>()
-                    .stations
-                    .filter { it.crs != null }
-            }.onSuccess {
-                _stations.value = LoadState.Success(it)
-            }.onFailure { error ->
-                _stations.value = LoadState.Error(error.toString())
-            }
+    suspend fun fetchStations() {
+        _stations.value = LoadState.Loading
+        runCatching {
+            client
+                .get(BASE_URL) {
+                    url { appendPathSegments("stations") }
+                }.body<Station.StationsResponse>()
+                .stations
+                .filter { it.crs != null }
+        }.onSuccess {
+            _stations.value = LoadState.Success(it)
+        }.onFailure { error ->
+            _stations.value = LoadState.Error(error.toString())
         }
     }
-
-    private val client = createHttpClient()
 
     @OptIn(ExperimentalTime::class)
     suspend fun getJourneyFares(

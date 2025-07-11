@@ -36,6 +36,7 @@ buildkonfig {
             "API_KEY",
             propertyFile.getProperty("trainboard.api_key")
                 ?: throw IllegalArgumentException("API_KEY not found in local.properties"),
+            const = true,
         )
     }
 }
@@ -117,6 +118,8 @@ kotlin {
             implementation(libs.ktor.client.darwin)
         }
     }
+
+    applyDefaultHierarchyTemplate()
 }
 
 android {
