@@ -87,15 +87,12 @@ fun JourneyCard(journey: Journey, modifier: Modifier = Modifier, earliestArrival
 
             ) {
                 if (journey.isFastestJourney) {
-                    DisplayPills("Fastest")
-                } else {
-                    Spacer(modifier = Modifier.width(80.dp))
+                    DisplayPills("Fastest", Color(0xFF006400))
+                    Spacer(modifier = Modifier.weight(1f))
                 }
-                Spacer(modifier = Modifier.weight(1f))
+
                 if (journey.journeyId == earliestArrivalTime) {
-                    DisplayPills("Arrives First")
-                } else {
-                    Spacer(modifier = Modifier.width(80.dp))
+                    DisplayPills("Arrives First", Color(0xFF673AB7))
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
@@ -150,12 +147,12 @@ private fun getCheapestTicketPrice(journey : Journey): String {
 }
 
 @Composable
-private fun DisplayPills(label: String) {
+private fun DisplayPills(label: String, colour: Color) {
     Box(
         modifier = Modifier
             .background(
                 shape = RoundedCornerShape(16.dp),
-                color = Color(0xFF006400)
+                color = colour
             )
             .padding(horizontal = 12.dp, vertical = 0.5.dp)
     ) {
