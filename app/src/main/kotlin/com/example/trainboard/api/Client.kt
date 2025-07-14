@@ -33,7 +33,6 @@ object Client {
                     .get(URL_BASE.resolve("stations").toString())
                     .body<StationsResponse>()
                     .stations
-                    .filter { it.crs != null }
             }.fold(
                 onSuccess = { _stations.value = it },
                 onFailure = { /* TODO: Errors won't cause crashes, but are better handled in part two. */ },

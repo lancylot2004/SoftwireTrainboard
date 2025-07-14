@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 data class Station(
     val id: Int,
     val name: String,
-    val crs: String?,
+    val crs: String,
 )
