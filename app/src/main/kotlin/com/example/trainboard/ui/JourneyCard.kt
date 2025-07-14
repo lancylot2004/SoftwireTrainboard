@@ -199,12 +199,10 @@ fun JourneyCardPreview() {
             arrivalTime = Instant.fromEpochMilliseconds(1700000036000),
             journeyDurationInMinutes = 60,
             originStation = Station(
-                id = 1,
                 name = "London Kings Cross",
                 crs = "KGX",
             ),
             destinationStation = Station(
-                id = 2,
                 name = "Edinburgh Waverley",
                 crs = "EDB",
             ),

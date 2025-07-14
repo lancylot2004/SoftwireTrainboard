@@ -10,9 +10,7 @@ import kotlin.time.Instant
 data class Journey(
     val journeyOptionToken: String,
     val journeyId: String,
-    @Serializable(with = Station.StationSerializer::class)
     val originStation: Station,
-    @Serializable(with = Station.StationSerializer::class)
     val destinationStation: Station,
     val departureTime: @Contextual Instant,
     val arrivalTime: @Contextual Instant,
