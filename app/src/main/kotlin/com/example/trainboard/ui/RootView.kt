@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import com.example.trainboard.structures.Station
 import java.net.URI
 
@@ -42,7 +43,7 @@ fun RootView(modifier: Modifier = Modifier) {
 
     Box(
         modifier
-            .padding(Padding.Large)
+            .padding(32.dp)
             .pointerInput(Unit) {
                 detectTapGestures { focusManager.clearFocus() }
             },
@@ -52,7 +53,7 @@ fun RootView(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(
-                space = Padding.Small,
+                space = 8.dp,
                 alignment = Alignment.Bottom,
             ),
         ) {
