@@ -28,10 +28,6 @@ import androidx.compose.ui.unit.dp
 import com.example.trainboard.structures.Journey
 import com.example.trainboard.structures.Station
 import com.example.trainboard.structures.Status
-import com.example.trainboard.utilities.Colour
-import com.example.trainboard.utilities.HourMinuteFormatter
-import com.example.trainboard.utilities.Padding
-import com.example.trainboard.utilities.Typography
 import kotlinx.datetime.format
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -58,7 +54,7 @@ fun JourneyCard(journey: Journey, modifier: Modifier = Modifier) {
             ) { isExpanded = !isExpanded },
     ) {
         Column(
-            Modifier.padding(Padding.Medium),
+            Modifier.padding(16.dp),
             verticalArrangement = Arrangement.Center,
         ) {
             TimesAndStations(
@@ -215,6 +211,6 @@ fun JourneyCardPreview() {
         ),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(Padding.Medium),
+            .padding(16.dp),
     )
 }

@@ -27,13 +27,11 @@ import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import com.example.trainboard.api.Client
 import com.example.trainboard.structures.Journey
 import com.example.trainboard.structures.Station
-import com.example.trainboard.utilities.Colour
 import com.example.trainboard.utilities.LoadState
-import com.example.trainboard.utilities.Padding
-import com.example.trainboard.utilities.Typography
 import com.example.trainboard.utilities.applyIf
 import com.valentinilk.shimmer.shimmer
 import kotlinx.coroutines.launch
@@ -56,7 +54,7 @@ fun RootView(modifier: Modifier = Modifier) {
 
     Box(
         modifier
-            .padding(Padding.Large)
+            .padding(32.dp)
             .fillMaxSize()
             .imePadding()
             .pointerInput(Unit) {
@@ -72,7 +70,7 @@ fun RootView(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(
-                space = Padding.Small,
+                space = 8.dp,
                 alignment = Alignment.Bottom,
             ),
         ) {

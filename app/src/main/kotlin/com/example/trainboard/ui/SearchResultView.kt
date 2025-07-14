@@ -27,8 +27,6 @@ import androidx.compose.ui.unit.dp
 import com.example.trainboard.structures.Journey
 import com.example.trainboard.structures.Station
 import com.example.trainboard.utilities.LoadState
-import com.example.trainboard.utilities.Padding
-import com.example.trainboard.utilities.Typography
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
 
@@ -66,7 +64,7 @@ fun ColumnScope.SearchResultView(
                 },
                 contentDescription = "Lancelot is loading your journeys...",
                 modifier = Modifier
-                    .padding(Padding.Medium)
+                    .padding(16.dp)
                     .size(200.dp)
                     .align(Alignment.CenterHorizontally)
                     .graphicsLayer { rotationX = rotation }
@@ -81,7 +79,7 @@ fun ColumnScope.SearchResultView(
                 },
                 contentDescription = "Nick is loading your journeys...",
                 modifier = Modifier
-                    .padding(Padding.Medium)
+                    .padding(16.dp)
                     .size(200.dp)
                     .align(Alignment.CenterHorizontally)
                     .graphicsLayer { rotationZ = rotation }
@@ -119,7 +117,7 @@ fun ColumnScope.SearchResultView(
             Text(
                 "${departureStation.name} to ${arrivalStation.name}",
                 modifier = Modifier
-                    .padding(Padding.Medium)
+                    .padding(16.dp)
                     .fillMaxWidth()
                     .align(Alignment.CenterHorizontally),
                 style = Typography.displaySmall,
@@ -131,7 +129,7 @@ fun ColumnScope.SearchResultView(
                     .fillMaxHeight()
                     .weight(1f),
                 verticalArrangement = Arrangement.spacedBy(
-                    space = Padding.Small,
+                    space = 8.dp,
                     alignment = Alignment.CenterVertically,
                 ),
             ) {

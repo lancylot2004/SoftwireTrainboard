@@ -41,7 +41,6 @@ object Client {
                     .get(URL_BASE.resolve("stations").toString())
                     .body<Station.StationsResponse>()
                     .stations
-                    .filter { it.crs != null }
             }.fold(
                 onSuccess = { _stations.value = LoadState.Success(it) },
                 onFailure = { error -> _stations.value = LoadState.Error(error.toString()) },
