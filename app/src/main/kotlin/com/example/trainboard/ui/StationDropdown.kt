@@ -25,9 +25,11 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.example.trainboard.api.Client
 import com.example.trainboard.structures.Station
+import com.example.trainboard.utilities.LoadState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,15 +44,19 @@ fun StationDropdown(
     val stations by Client.stations.collectAsState()
     var selectedStation: Station? by remember { mutableStateOf(null) }
 
+    val localDensity = LocalDensity.current
     var textFieldWidth by remember { mutableStateOf(0.dp) }
     val focusRequester = remember { FocusRequester() }
 
     val filteredStations = remember {
         derivedStateOf {
+            if (stations !is LoadState.Success) return@derivedStateOf emptyList()
+            val stationList = (stations as LoadState.Success<List<Station>>).data
+
             if (searchQuery.isBlank()) {
-                stations
+                stationList
             } else {
-                stations.filter { it.name.contains(searchQuery, ignoreCase = true) }
+                stationList.filter { it.name.contains(searchQuery, ignoreCase = true) }
             }
         }
     }
@@ -90,7 +96,9 @@ fun StationDropdown(
                             selectedStation = station
                             isExpanded = false
                         }
-                }.onGloballyPositioned { textFieldWidth = it.size.width.dp },
+                }.onGloballyPositioned {
+                    textFieldWidth = with(localDensity) { it.size.width.toDp() }
+                },
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(isExpanded) },
             singleLine = true,

@@ -1,0 +1,142 @@
+package com.example.trainboard.ui
+
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.example.trainboard.structures.Journey
+import com.example.trainboard.structures.Station
+import com.example.trainboard.utilities.LoadState
+import io.kamel.image.KamelImage
+import io.kamel.image.asyncPainterResource
+
+@Composable
+fun ColumnScope.SearchResultView(
+    searchState: LoadState<List<Journey>, String>,
+    departureStation: Station?,
+    arrivalStation: Station?,
+) {
+    when (searchState) {
+        LoadState.Idle -> {
+            Text(
+                text = "Search for journeys between two stations.",
+                style = Typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+
+        LoadState.Loading -> {
+            val infiniteTransition = rememberInfiniteTransition()
+            val rotation by infiniteTransition.animateFloat(
+                initialValue = 0f,
+                targetValue = 360f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = 1000, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart,
+                ),
+            )
+
+            KamelImage(
+                resource = {
+                    asyncPainterResource(
+                        "https://media.licdn.com/dms/image/v2/D4E03AQGYKKntDnhkKA/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1710953472462?e=1757548800&v=beta&t=Y3yA635XxMFmPnXJo0ffGWa0jgfr--COMEU9maR8A24",
+                    )
+                },
+                contentDescription = "Lancelot is loading your journeys...",
+                modifier = Modifier
+                    .padding(16.dp)
+                    .size(200.dp)
+                    .align(Alignment.CenterHorizontally)
+                    .graphicsLayer { rotationX = rotation }
+                    .clip(CircleShape),
+            )
+
+            KamelImage(
+                resource = {
+                    asyncPainterResource(
+                        "https://media.licdn.com/dms/image/v2/D4E03AQHhzFaui6EW-A/profile-displayphoto-shrink_400_400/B4EZOWZvztH0Ag-/0/1733395152723?e=1757548800&v=beta&t=3LJSOy1MLupQeGQ5ldEAHvkyl17tsBtjfufAFJrX-n4",
+                    )
+                },
+                contentDescription = "Nick is loading your journeys...",
+                modifier = Modifier
+                    .padding(16.dp)
+                    .size(200.dp)
+                    .align(Alignment.CenterHorizontally)
+                    .graphicsLayer { rotationZ = rotation }
+                    .clip(CircleShape),
+            )
+        }
+
+        is LoadState.Error -> {
+            Text(
+                text = "An error occurred while searching for journeys.",
+                style = Typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+
+        is LoadState.Success -> {
+            val journeys = searchState.data
+
+            if (journeys.isEmpty()) {
+                Text(
+                    text = "No journeys found. Please try different stations.",
+                    style = Typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+
+                return
+            }
+            requireNotNull(departureStation) {
+                "Departure must not be null when displaying search results."
+            }
+            requireNotNull(arrivalStation) {
+                "Arrival must not be null when displaying search results."
+            }
+
+            Text(
+                "${departureStation.name} to ${arrivalStation.name}",
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+                    .align(Alignment.CenterHorizontally),
+                style = Typography.displaySmall,
+                fontWeight = FontWeight.Bold,
+            )
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .weight(1f),
+                verticalArrangement = Arrangement.spacedBy(
+                    space = 8.dp,
+                    alignment = Alignment.CenterVertically,
+                ),
+            ) {
+                items(journeys) { journey ->
+                    JourneyCard(journey)
+                }
+            }
+        }
+    }
+}

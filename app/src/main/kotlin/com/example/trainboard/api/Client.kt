@@ -1,8 +1,11 @@
 package com.example.trainboard.api
 
 import com.example.trainboard.BuildConfig
+import com.example.trainboard.structures.FareSearchResult
+import com.example.trainboard.structures.Journey
+import com.example.trainboard.structures.JourneyLeg
 import com.example.trainboard.structures.Station
-import com.example.trainboard.structures.StationsResponse
+import com.example.trainboard.utilities.LoadState
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
@@ -11,6 +14,7 @@ import io.ktor.client.plugins.cache.HttpCache
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.parameter
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,24 +22,28 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.plus
 import java.net.URI
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 object Client {
     private val URL_BASE = URI("https://int-test1.tram.softwire-lner-dev.co.uk/v1/")
 
-    private val _stations = MutableStateFlow<List<Station>>(emptyList())
-    val stations: StateFlow<List<Station>> get() = _stations
+    private val _stations = MutableStateFlow<LoadState<List<Station>, String>>(LoadState.Idle)
+    val stations: StateFlow<LoadState<List<Station>, String>> get() = _stations
 
     init {
         CoroutineScope(Dispatchers.IO).launch {
+            _stations.value = LoadState.Loading
             runCatching {
-                return@runCatching client
+                client
                     .get(URL_BASE.resolve("stations").toString())
-                    .body<StationsResponse>()
+                    .body<Station.StationsResponse>()
                     .stations
             }.fold(
-                onSuccess = { _stations.value = it },
-                onFailure = { /* TODO: Errors won't cause crashes, but are better handled in part two. */ },
+                onSuccess = { _stations.value = LoadState.Success(it) },
+                onFailure = { error -> _stations.value = LoadState.Error(error.toString()) },
             )
         }
     }
@@ -45,6 +53,8 @@ object Client {
             json(
                 Json {
                     ignoreUnknownKeys = true
+                    serializersModule += JourneyLeg.Module
+                    classDiscriminator = "type"
                 },
             )
         }
@@ -53,4 +63,26 @@ object Client {
             header("x-api-key", BuildConfig.API_KEY)
         }
     }
+
+    @OptIn(ExperimentalTime::class)
+    suspend fun getJourneyFares(
+        originStation: Station,
+        destinationStation: Station,
+    ): LoadState<List<Journey>, String> = runCatching {
+        client
+            .get(URL_BASE.resolve("fares").toString()) {
+                url {
+                    parameter("originStation", originStation.crs)
+                    parameter("destinationStation", destinationStation.crs)
+                    parameter("outboundDateTime", Clock.System.now().toString())
+                    parameter("inboundDateTime", null as String?)
+                    parameter("numberOfChildren", 0)
+                    parameter("numberOfAdults", 1)
+                    parameter("maxNumberOfChanges", 5)
+                }
+            }.body<FareSearchResult>()
+    }.fold(
+        onSuccess = { LoadState.Success(it.outboundJourneys) },
+        onFailure = { LoadState.Error(it.toString()) },
+    )
 }

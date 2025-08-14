@@ -6,31 +6,37 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.trainboard.api.Client
+import com.example.trainboard.structures.Journey
 import com.example.trainboard.structures.Station
-import java.net.URI
-
-private val URL_REDIRECT = URI(
-    "https://www.lner.co.uk/" +
-        "travel-information/travelling-now/live-train-times/depart/",
-)
+import com.example.trainboard.utilities.LoadState
+import com.example.trainboard.utilities.applyIf
+import com.valentinilk.shimmer.shimmer
+import kotlinx.coroutines.launch
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,17 +44,28 @@ fun RootView(modifier: Modifier = Modifier) {
     var departureStation by remember { mutableStateOf<Station?>(null) }
     var arrivalStation by remember { mutableStateOf<Station?>(null) }
 
-    val uriHandler = LocalUriHandler.current
     val focusManager = LocalFocusManager.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    var searchState: LoadState<List<Journey>, String> by remember {
+        mutableStateOf(LoadState.Idle)
+    }
 
     Box(
         modifier
             .padding(32.dp)
+            .fillMaxSize()
+            .imePadding()
             .pointerInput(Unit) {
                 detectTapGestures { focusManager.clearFocus() }
             },
-        contentAlignment = Alignment.Center,
     ) {
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.TopCenter),
+        )
+
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -57,15 +74,27 @@ fun RootView(modifier: Modifier = Modifier) {
                 alignment = Alignment.Bottom,
             ),
         ) {
-            StationDropdown(label = "From") { departureStation = it }
-            StationDropdown(label = "To") { arrivalStation = it }
+            /* TODO: Reconsider coupling between `StationDropdown` and API calls, and consider
+               how to show error states which are unrelated to search, neatly. */
+            SearchResultView(searchState, departureStation, arrivalStation)
+
+            StationDropdown(label = "From") { it?.let { departureStation = it } }
+            StationDropdown(label = "To") { it?.let { arrivalStation = it } }
 
             TextButton(
-                enabled = departureStation != null && arrivalStation != null,
                 onClick = {
-                    handleSearch(departureStation, arrivalStation, uriHandler)
+                    scope.launch {
+                        onSearch(
+                            departureStation,
+                            arrivalStation,
+                            snackbarHostState,
+                            focusManager,
+                        ) { newState -> searchState = newState }
+                    }
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .applyIf(searchState is LoadState.Loading) { this.shimmer() },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Colour.primaryContainer,
                     contentColor = Colour.onPrimaryContainer,
@@ -81,19 +110,75 @@ fun RootView(modifier: Modifier = Modifier) {
     }
 }
 
-private fun handleSearch(
+private suspend fun onSearch(
+    departureStation: Station?,
+    arrivalStation: Station?,
+    snackbarHostState: SnackbarHostState,
+    focusManager: FocusManager,
+    callback: (LoadState<List<Journey>, String>) -> Unit,
+) {
+    if (!checkCanSearch(departureStation, arrivalStation, snackbarHostState)) {
+        return
+    }
+
+    focusManager.clearFocus()
+    callback(LoadState.Loading)
+
+    handleSearch(departureStation, arrivalStation) {
+        callback(it)
+    }
+}
+
+@OptIn(ExperimentalContracts::class)
+private suspend fun checkCanSearch(
     fromStation: Station?,
     toStation: Station?,
-    uriHandler: UriHandler,
-) {
-    requireNotNull(fromStation) { "Origin station not selected!" }
-    requireNotNull(fromStation.crs) { "Origin station not valid!" }
-    requireNotNull(toStation) { "Destination station not selected!" }
-    requireNotNull(toStation.crs) { "Destination station not valid!" }
-    uriHandler.openUri(
-        URL_REDIRECT
-            .resolve("${fromStation.crs}/")
-            .resolve("${toStation.crs}/")
-            .toString(),
-    )
+    snackbarHostState: SnackbarHostState,
+): Boolean {
+    contract {
+        returns(true) implies (fromStation != null && toStation != null)
+    }
+
+    if (fromStation == null) {
+        snackbarHostState.showSnackbar(
+            message = "Origin station not selected or invalid.",
+            actionLabel = "OK",
+            duration = SnackbarDuration.Short,
+        )
+
+        return false
+    }
+
+    if (toStation == null) {
+        snackbarHostState.showSnackbar(
+            message = "Destination station not selected or invalid.",
+            actionLabel = "OK",
+            duration = SnackbarDuration.Short,
+        )
+
+        return false
+    }
+
+    requireNotNull(fromStation.crs) { "[Impossible] Origin station does not have a CRS." }
+    requireNotNull(toStation.crs) { "[Impossible] Destination station does not have a CRS." }
+
+    if (fromStation == toStation) {
+        snackbarHostState.showSnackbar(
+            message = "Origin and destination stations cannot be the same.",
+            actionLabel = "OK",
+            duration = SnackbarDuration.Short,
+        )
+
+        return false
+    }
+
+    return true
 }
+
+private suspend fun handleSearch(
+    fromStation: Station,
+    toStation: Station,
+    callback: (LoadState<List<Journey>, String>) -> Unit,
+) = Client
+    .getJourneyFares(fromStation, toStation)
+    .let(callback)
