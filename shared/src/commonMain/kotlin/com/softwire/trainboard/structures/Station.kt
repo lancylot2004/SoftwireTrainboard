@@ -1,60 +1,35 @@
 package com.softwire.trainboard.structures
 
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.buildClassSerialDescriptor
-import kotlinx.serialization.descriptors.element
-import kotlinx.serialization.encoding.CompositeDecoder
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.encoding.encodeStructure
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNames
+import kotlinx.serialization.json.JsonTransformingSerializer
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 @Serializable
+@OptIn(ExperimentalSerializationApi::class)
 data class Station(
-    val id: Int,
+    @JsonNames("name", "displayName")
     val name: String,
-    val crs: String?,
+    val crs: String,
 ) {
     @Serializable
     data class StationsResponse(
+        @Serializable(with = FilteredSerializer::class)
         val stations: List<Station>,
     )
 
-    @OptIn(ExperimentalSerializationApi::class)
-    class StationSerializer : KSerializer<Station> {
-        override val descriptor: SerialDescriptor = buildClassSerialDescriptor("Station") {
-            element<String>("displayName")
-            element<String>("crs")
-            element<String>("nlc")
-        }
-
-        override fun serialize(encoder: Encoder, value: Station) =
-            encoder.encodeStructure(descriptor) {
-                encodeStringElement(descriptor, 0, value.name)
-                encodeStringElement(descriptor, 1, value.crs ?: "")
-                encodeStringElement(descriptor, 2, "")
-            }
-
-        override fun deserialize(decoder: Decoder): Station {
-            val decoder = decoder.beginStructure(descriptor)
-            var displayName = ""
-            var crs = ""
-
-            loop@ while (true) {
-                when (val index = decoder.decodeElementIndex(descriptor)) {
-                    0 -> displayName = decoder.decodeStringElement(descriptor, index)
-                    1 -> crs = decoder.decodeStringElement(descriptor, index)
-                    2 -> decoder.decodeStringElement(descriptor, index)
-                    CompositeDecoder.DECODE_DONE -> break@loop
-                    else -> throw SerializationException("Unexpected index: $index")
-                }
-            }
-
-            decoder.endStructure(descriptor)
-            return Station(0, displayName, crs)
+    object FilteredSerializer :
+        JsonTransformingSerializer<List<Station>>(ListSerializer(Station.serializer())) {
+        override fun transformDeserialize(element: JsonElement): JsonElement {
+            val array = element.jsonArray
+            val filtered = array.filter { it.jsonObject["crs"]?.jsonPrimitive?.isString == true }
+            return JsonArray(filtered)
         }
     }
 }

@@ -62,7 +62,7 @@ fun RootView(modifier: Modifier = Modifier) {
 
     Box(
         modifier
-            .padding(Padding.Large)
+            .padding(32.dp)
             .fillMaxSize()
             .imePadding()
             .pointerInput(Unit) {
@@ -78,7 +78,7 @@ fun RootView(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(
-                space = Padding.Small,
+                space = 8.dp,
                 alignment = Alignment.Bottom,
             ),
         ) {

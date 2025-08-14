@@ -1,21 +1,12 @@
-package com.softwire.trainboard.utilities
+package com.example.trainboard.utilities
 
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.unit.dp
 import kotlinx.datetime.format.DateTimeComponents
 import kotlinx.datetime.format.Padding
 import kotlinx.datetime.format.char
-
-object Padding {
-    val Small = 8.dp
-
-    val Medium = 16.dp
-
-    val Large = 32.dp
-}
 
 val Colour: ColorScheme
     @Composable get() = MaterialTheme.colorScheme

@@ -69,7 +69,7 @@ fun JourneyCard(
             ) { isExpanded = !isExpanded },
     ) {
         Column(
-            Modifier.padding(Padding.Medium),
+            Modifier.padding(16.dp),
             verticalArrangement = Arrangement.Center,
         ) {
             DisplayTimesAndStations(
