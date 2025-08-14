@@ -1,3 +1,6 @@
+@file:Suppress("UnstableApiUsage")
+
+rootProject.name = "TrainBoard"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {
@@ -29,6 +32,4 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "TrainBoard"
-include(":app")
- 
+include(":shared")
